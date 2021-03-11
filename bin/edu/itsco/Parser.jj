@@ -1,0 +1,222 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = true;}PARSER_BEGIN(Parser)package edu.itsco;
+
+public class Parser{  public static void main(String args []) throws ParseException  {    Parser parser = new Parser(System.in);
+    System.out.println("Biembenidos a mi compilador Miri");    Parser.gramaticaPrincipal();
+     System.out.println("Compilacion exitosa att:Miri");  }}PARSER_END(Parser)SKIP :{  " "| "\r"| "\t"| "\n"}
+//PALABRAS RESERVADAS
+TOKEN :
+{
+  < PROGRAMA : "programa" >
+| < FIN : "fin" >
+
+| < ENTERO : "entero" >
+| < CADENA : "cadena" >
+| < DECIMAL : "decimal" >
+
+| < IMPRIMIR : "imprimir" >
+| < CAPTURAR : "capturar" >
+//CICLO IF
+| < SI : "si" >
+| < SINO : "sino" >
+//CICLO SWITCH
+| < SELECCIONA : "seleciona" >
+| < CASO : "caso" >
+| < ROMPER: "romper">
+| < DEFECTO: "defecto">
+
+//CICLO FOR
+| < PARA : "para" >
+
+//CICLO WHILE
+| < MIENTRAS : "mientras" >
+| < HACER : "hacer" >
+
+}
+
+//SIMBOLOS Y OPERADORES
+TOKEN :
+{
+ < SUMA : "+" >
+| < RESTA : "-" >
+| < MULTIPLICACION : "*" >
+| < DIVICION : "/" >
+| < RESIDUO : "%" >
+| < POT : "^" >
+| < IGUAL: "=">
+
+| < MAYOR : ">" >
+| < MENOR : "<" >
+
+| < AND : "&&" >
+| < OR : "||" >
+| < NOT : "!" >
+
+| < AP: "(" >
+| < CP: ")" >
+
+| < ALL: "{" >
+| < CLL: "}" >
+
+| < PC: ";" >
+| < PP: ":" >
+}
+TOKEN :
+{
+ <#digitos: ["0"-"9"] >
+| <#letras: ["a"-"z","A"-"Z"] >
+| <ID: (<letras>|"_")(<letras>|<digitos>|"_")*>
+
+| <VALOR_ENTERO: (<digitos >)+ >
+| <VALOR_DECIMAL: (< digitos >)+"."(< digitos >)+ >
+| <VALOR_CADENA:("\"" (~["\""])+ "\"") >
+}
+
+//SECCION DE GRAMATICA
+
+void gramaticaPrincipal():
+{
+ 
+}{
+   <PROGRAMA> <ID> <ALL>
+   gramaticaSentencias()
+   <CLL>
+}
+
+void gramaticaSentencias():{
+  }{
+    (
+    gramaticaDeclararVariables()
+  | gramaticaCapturar()
+  | gramaticaImprimir()
+  | gramaticaSi()
+  | gramaticaMientras()
+  | gramaticaHacerMientras()
+  | gramaticaSelecciona()
+  | gramaticaAsignacion()
+  | gramaticaPara()
+    
+ 	)+
+}
+
+void gramaticaDeclararVariables():{
+  }{
+    tipoDato()<ID> [<IGUAL> valor()] <PC> 
+}
+void tipoDato():{
+  }{
+    <ENTERO > |  < CADENA > | < DECIMAL >
+}
+
+void valor():{
+  }{
+    <VALOR_ENTERO > |  < VALOR_CADENA >
+    | < VALOR_DECIMAL > | < ID >
+}
+
+void gramaticaCapturar(): {
+  } {
+      <CAPTURAR > < AP > <ID >< CP> < PC>
+  }
+void gramaticaImprimir(): {
+   } {
+
+     <IMPRIMIR> < AP >valor()
+     (<SUMA> valor())*
+     < CP> < PC>
+}
+void gramaticaSi(): {
+   } {
+
+     <SI> < AP >condicion()< CP >
+     <ALL >
+     	gramaticaSentencias()
+     <CLL>
+    [<SINO > <ALL >
+    	gramaticaSentencias()
+     < CLL> ]
+}
+void condicion(): {
+   } {
+     evaluacionSimple() (opLogico() evaluacionSimple())*
+
+}
+void evaluacionSimple(): {
+   } {
+     valor() opRelacional() valor()
+}   
+void opRelacional(): {
+   } {
+     <MAYOR > [<IGUAL >]
+   |   <MENOR > [<IGUAL >]
+   |   <NOT > <IGUAL >
+   |   <IGUAL > <IGUAL >   
+}
+void opLogico(): {
+   } {
+     <AND >|< OR >  
+}
+void gramaticaMientras(): {
+   } {
+     <MIENTRAS ><AP > condicion() <CP >
+     <ALL >
+     	gramaticaSentencias()
+     <CLL >
+}
+void gramaticaHacerMientras(): {
+   } {
+     < HACER > <ALL >
+     	gramaticaSentencias()
+     <CLL > <MIENTRAS ><AP > condicion() <CP ><PC >
+}
+void gramaticaSelecciona(): {
+   } {
+     <SELECCIONA > <AP > <ID > <CP >
+     < ALL >
+     (       
+     < CASO ><VALOR_ENTERO ><PP > gramaticaSentencias()
+     < ROMPER ><PC >
+   )+
+   [<DEFECTO > gramaticaSentencias() [<ROMPER ><PC>]]
+   < CLL >
+}
+void gramaticaAsignacion(): {
+   } {
+     <ID > <IGUAL >  operacionSimple() <PC > 
+}
+void operacionSimple(): {
+   } {
+     (
+       valor()|operacionParentesis()
+     )
+     (operadorAritmetico()
+     	(valor() | operacionParentesis()) )*   
+}
+
+void operacionParentesis(): {
+   } {
+     < AP >operacionSimple()< CP >
+}
+
+void operadorAritmetico(): {
+   } {
+     < SUMA >| < RESTA > | < DIVICION >| < MULTIPLICACION >|< RESIDUO >   
+}
+
+void gramaticaPara(): {
+   } {
+     < PARA ><AP ><ID ><IGUAL >valor()< PC > condicion() < PC >
+       < ID >(
+         < SUMA ><SUMA >
+         | < RESTA ><RESTA >
+         |< IGUAL > operacionSimple()
+         )< CP >
+         < ALL >
+         gramaticaSentencias()
+         < CLL >
+              
+}
+
+
+
