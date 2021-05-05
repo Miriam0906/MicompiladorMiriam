@@ -3,19 +3,27 @@ package edu.itsco;
 public class SemanticException extends Exception{
 	
 
-	public static final int  VARIABLE_NO_DEFINIDA = 10;
-	public static final int  VARIABLE_DUPLICADA = 20;
-	public static final int  VARIABLE_NO_INICIALIZADA = 30;
-	public static final int  TIPOS_NO_COINCIDEN = 40;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	
-	//Atrapalos errores de las variables 
-	public SemanticException(Variable variable, int tipoException){
-		 super(getMessage(variable,tipoException));
+	public enum Tipo {
+		VARIABLE_NO_DEFINIDA,VARIABLE_NO_INICIALIZADA,
+		VARIABLE_DUPLICADA,TIPOS_NO_COINCIDEN
+	}
+	public SemanticException() {
+		super();
 	}
 	
-	public static String getMessage(Variable variable, int tipoException){
+	//Atrapalos errores de las variables 
+	public SemanticException(Variable variable, Tipo tipo){
+		 super(obtenerMensaje(variable,tipo));
+	}
+	
+	public static String obtenerMensaje(Variable variable, Tipo tipo){
 		 String mensaje ="";
-		 switch (tipoException){
+		 switch (tipo){
 		 
 		 case VARIABLE_NO_DEFINIDA:
 			 mensaje = "La variable "+ variable.getId() + "nose declario";

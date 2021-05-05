@@ -2,9 +2,43 @@
  * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
  */options{  static = true;}PARSER_BEGIN(Parser)package edu.itsco;
 
-public class Parser{  public static void main(String args []) throws ParseException  {    Parser parser = new Parser(System.in);
+import java.util.ArrayList;
+
+public class Parser{
+
+  private static ArrayList<Variable> listaVariable;  public static void main(String args [])  {
+    listaVariable = new ArrayList<Variable>();    Parser parser = new Parser(System.in);
+
+   try { 
     System.out.println("Biembenidos a mi compilador Miri");    Parser.gramaticaPrincipal();
-     System.out.println("Compilacion exitosa att:Miri");  }}PARSER_END(Parser)SKIP :{  " "| "\r"| "\t"| "\n"}
+     System.out.println("Compilacion exitosa att:Miri");
+   }catch (ParseException pex) {
+		System.err.println(pex.getMessage());
+      }catch (SemanticException es) {
+        System.err.println(es.getMessage());
+
+      }  }
+
+  private static boolean existeVariable(Variable variable) {
+	return listaVariable.contains(variable);
+  }
+
+  private static void agregarVariable(Variable variable)
+  throws SemanticException{
+    if(!existeVariable(variable)){
+      listaVariable.add(variable);
+       }else {
+		throw new SemanticException(variable, SemanticException.Tipo.VARIABLE_DUPLICADA);
+       }
+    }
+   private static void variableDefinida(Variable variable)
+    throws SemanticException{
+	if(!existeVariable(variable)){
+      throw new SemanticException (variable,
+      SemanticException.Tipo.VARIABLE_NO_DEFINIDA);
+       }
+     }
+     }PARSER_END(Parser)SKIP :{  " "| "\r"| "\t"| "\n"}
 //PALABRAS RESERVADAS
 TOKEN :
 {
@@ -75,7 +109,7 @@ TOKEN :
 
 //SECCION DE GRAMATICA
 
-void gramaticaPrincipal():
+void gramaticaPrincipal()throws SemanticException:
 {
  
 }{
@@ -84,7 +118,7 @@ void gramaticaPrincipal():
    <CLL>
 }
 
-void gramaticaSentencias():{
+void gramaticaSentencias()throws SemanticException:{
   }{
     (
     gramaticaDeclararVariables()
@@ -100,33 +134,67 @@ void gramaticaSentencias():{
  	)+
 }
 
-void gramaticaDeclararVariables():{
+void gramaticaDeclararVariables() throws SemanticException :{
+  Token id;
+  Token tipoDato;
   }{
-    tipoDato()<ID> [<IGUAL> valor()] <PC> 
+    tipoDato = tipoDato() id = <ID>
+	{
+	  Variable v = new Variable(id.image,tipoDato.image);
+	}
+    [<IGUAL> valor()
+	{v.setEstaInicializada(true);}
+    ]
+    {
+      agregarVariable(v);
+    }
+    <PC> 
 }
-void tipoDato():{
-  }{
-    <ENTERO > |  < CADENA > | < DECIMAL >
+Token tipoDato():{
+  Token tipoDato;
+  } { 
+  		(
+   			 tipoDato = <ENTERO >
+   			 | tipoDato =  < CADENA >
+   			 | tipoDato = < DECIMAL >
+    	)
+    	{return tipoDato; }
 }
 
-void valor():{
+void valor()throws SemanticException:{
+  Token id;
   }{
-    <VALOR_ENTERO > |  < VALOR_CADENA >
-    | < VALOR_DECIMAL > | < ID >
+    (
+    <VALOR_ENTERO >
+    |  < VALOR_CADENA >
+    | < VALOR_DECIMAL >
+    | id = < ID >
+    {
+        Variable v = new Variable();
+        v.setId(id.image);
+        variableDefinida(v);
+      }
+    )
 }
 
-void gramaticaCapturar(): {
+void gramaticaCapturar()throws SemanticException: {
+  Token id;
   } {
-      <CAPTURAR > < AP > <ID >< CP> < PC>
+      <CAPTURAR > < AP > id = <ID >< CP> < PC>
+      {
+        Variable v = new Variable();
+        v.setId(id.image);
+        variableDefinida(v);
+      }
   }
-void gramaticaImprimir(): {
+void gramaticaImprimir()throws SemanticException: {
    } {
 
      <IMPRIMIR> < AP >valor()
      (<SUMA> valor())*
      < CP> < PC>
 }
-void gramaticaSi(): {
+void gramaticaSi()throws SemanticException: {
    } {
 
      <SI> < AP >condicion()< CP >
@@ -137,12 +205,12 @@ void gramaticaSi(): {
     	gramaticaSentencias()
      < CLL> ]
 }
-void condicion(): {
+void condicion()throws SemanticException: {
    } {
      evaluacionSimple() (opLogico() evaluacionSimple())*
 
 }
-void evaluacionSimple(): {
+void evaluacionSimple()throws SemanticException: {
    } {
      valor() opRelacional() valor()
 }   
@@ -157,20 +225,20 @@ void opLogico(): {
    } {
      <AND >|< OR >  
 }
-void gramaticaMientras(): {
+void gramaticaMientras()throws SemanticException: {
    } {
      <MIENTRAS ><AP > condicion() <CP >
      <ALL >
      	gramaticaSentencias()
      <CLL >
 }
-void gramaticaHacerMientras(): {
+void gramaticaHacerMientras()throws SemanticException: {
    } {
      < HACER > <ALL >
      	gramaticaSentencias()
      <CLL > <MIENTRAS ><AP > condicion() <CP ><PC >
 }
-void gramaticaSelecciona(): {
+void gramaticaSelecciona()throws SemanticException: {
    } {
      <SELECCIONA > <AP > <ID > <CP >
      < ALL >
@@ -181,11 +249,17 @@ void gramaticaSelecciona(): {
    [<DEFECTO > gramaticaSentencias() [<ROMPER ><PC>]]
    < CLL >
 }
-void gramaticaAsignacion(): {
+void gramaticaAsignacion()throws SemanticException: {
+	Token id;
    } {
-     <ID > <IGUAL >  operacionSimple() <PC > 
+     id = <ID > <IGUAL >  operacionSimple() <PC >
+     {
+       Variable v = new Variable();
+        v.setId(id.image);
+        variableDefinida(v);
+     }
 }
-void operacionSimple(): {
+void operacionSimple()throws SemanticException: {
    } {
      (
        valor()|operacionParentesis()
@@ -194,7 +268,7 @@ void operacionSimple(): {
      	(valor() | operacionParentesis()) )*   
 }
 
-void operacionParentesis(): {
+void operacionParentesis()throws SemanticException: {
    } {
      < AP >operacionSimple()< CP >
 }
@@ -204,7 +278,7 @@ void operadorAritmetico(): {
      < SUMA >| < RESTA > | < DIVICION >| < MULTIPLICACION >|< RESIDUO >   
 }
 
-void gramaticaPara(): {
+void gramaticaPara()throws SemanticException: {
    } {
      < PARA ><AP ><ID ><IGUAL >valor()< PC > condicion() < PC >
        < ID >(

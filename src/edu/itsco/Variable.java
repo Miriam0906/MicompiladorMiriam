@@ -1,5 +1,7 @@
 package edu.itsco;
 
+import java.util.Objects;
+
 public class Variable {
 
 	private String id;
@@ -41,10 +43,17 @@ public class Variable {
 	public boolean equals(Object obj) 	{
 		if(obj instanceof Variable) {
 			Variable v = (Variable) obj;
-			return this.id.equals(v.getId());
+			return v.hashCode() == this.hashCode();
 		}
 		return false;
 	}
+	
+	@Override
+	public int hashCode() 	{
+		int hash= 8;
+		return hash * 54 + Objects.hashCode(this.id);
+	}
+	
 	
 	
 }
